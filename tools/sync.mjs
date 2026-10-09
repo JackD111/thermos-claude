@@ -138,11 +138,30 @@ export function unifiedDiff(a, b) {
 	}
 }
 
+// The output must be the same bytes on every machine, so no user or system
+// git config reaches it (diff.noprefix, diff.context, diff.algorithm, and
+// the like), and every format choice is spelled out.
+const GIT_CONFIG_ENV = /^GIT_CONFIG(?:_|$)|^GIT_CONFIG_PARAMETERS$/;
+
+// `emptyConfig` is an empty file: Git for Windows rejects the null device here.
+export function isolatedGitEnv(emptyConfig, env = process.env) {
+	const clean = Object.fromEntries(Object.entries(env).filter(([key]) => !GIT_CONFIG_ENV.test(key)));
+	return { ...clean, GIT_CONFIG_GLOBAL: emptyConfig, GIT_CONFIG_NOSYSTEM: "1" };
+}
+
 function diffNoIndex(cwd, a, b) {
+	const emptyConfig = join(cwd, ".empty-gitconfig");
+	writeFileSync(emptyConfig, "");
 	const out = spawnSync(
 		"git",
-		["-c", "core.autocrlf=false", "-c", "core.quotepath=false", "diff", "--no-index", "--no-color", "--no-ext-diff", "--", a, b],
-		{ cwd, encoding: "utf8", maxBuffer: 64 << 20 },
+		[
+			"-c", "core.autocrlf=false",
+			"-c", "core.quotepath=false",
+			"diff", "--no-index", "--no-color", "--no-ext-diff", "--no-renames",
+			"--src-prefix=a/", "--dst-prefix=b/", "--diff-algorithm=myers", "--unified=3", "--inter-hunk-context=0",
+			"--", a, b,
+		],
+		{ cwd, encoding: "utf8", maxBuffer: 64 << 20, env: isolatedGitEnv(emptyConfig) },
 	);
 	if (out.status > 1) throw new Error(`git diff --no-index failed: ${out.stderr}`);
 	return out.stdout;
@@ -169,23 +188,24 @@ export function loadForks(root = repo) {
 	return parseForks(JSON.parse(readFileSync(join(root, "tools/forks.json"), "utf8")));
 }
 
-export function currentParity(root = repo, spec = loadUpstream(root)) {
-	const upstream = upstreamFiles({ ...spec, sha: spec.sha });
-	return parityReport(upstream, readLocal(root, spec.localPath, [...upstream.keys()]));
-}
-
-function main(argv) {
+// The CLI. `root` and `cache` are parameters so tests can run it against a
+// scratch tree and a local upstream repository.
+export function main(argv, { root = repo, cache = join(root, ".cache/upstream.git"), log = console.log, error = console.error } = {}) {
 	const flags = new Set(argv.filter((a) => a.startsWith("--")));
 	const [target] = argv.filter((a) => !a.startsWith("--"));
-	const spec = loadUpstream();
+	const spec = loadUpstream(root);
 	if (spec.localPath !== PLUGIN) throw new Error(`upstream.json localPath "${spec.localPath}" != ${PLUGIN}`);
-	const rules = loadRules();
-	const forks = loadForks();
-	const parityPath = join(repo, "docs/parity.diff");
+	const rules = loadRules(root);
+	const forks = loadForks(root);
+	const parityPath = join(root, "docs/parity.diff");
+	const fetch = (sha) => upstreamFiles({ ...spec, sha, cache });
+	const local = (files) => readLocal(root, spec.localPath, [...files.keys()]);
 
 	if (flags.has("--report")) {
-		writeFileSync(parityPath, currentParity(repo, spec));
-		console.log("wrote docs/parity.diff");
+		const upstream = fetch(spec.sha);
+		mkdirSync(dirname(parityPath), { recursive: true });
+		writeFileSync(parityPath, parityReport(upstream, local(upstream)));
+		log("wrote docs/parity.diff");
 		return 0;
 	}
 
@@ -193,47 +213,47 @@ function main(argv) {
 	const rederive = flags.has("--rederive");
 	const sha = check || rederive ? spec.sha : target;
 	if (!sha || !/^[0-9a-f]{40}$/.test(sha)) {
-		console.error("usage: bun tools/sync.mjs <40-char sha> [--dry-run] [--accept-forks] | --rederive | --check | --report");
+		error("usage: bun tools/sync.mjs <40-char sha> [--dry-run] [--accept-forks] | --rederive | --check | --report");
 		return 2;
 	}
-	const oldFiles = upstreamFiles({ ...spec, sha: spec.sha });
-	const newFiles = sha === spec.sha ? oldFiles : upstreamFiles({ ...spec, sha });
-	const rels = [...new Set([...oldFiles.keys(), ...newFiles.keys()])];
+	const oldFiles = fetch(spec.sha);
+	const newFiles = sha === spec.sha ? oldFiles : fetch(sha);
 	const result = plan({
 		oldFiles,
 		newFiles,
-		localFiles: readLocal(repo, spec.localPath, rels),
+		localFiles: readLocal(root, spec.localPath, [...new Set([...oldFiles.keys(), ...newFiles.keys()])]),
 		rules,
 		forks,
 		atPin: check,
 		acceptForks: flags.has("--accept-forks"),
 		rederive,
 	});
-	for (const { rel, outcome } of result.outcomes) console.log(`${outcome.padEnd(9)} ${rel}`);
-	for (const warning of result.warnings) console.warn(`warning: ${warning}`);
-	if (check && existsSync(parityPath) && readFileSync(parityPath, "utf8") !== parityReport(oldFiles, readLocal(repo, spec.localPath, [...oldFiles.keys()]))) {
-		result.errors.push("docs/parity.diff is stale; run bun tools/sync.mjs --report");
-	} else if (check && !existsSync(parityPath)) {
-		result.errors.push("docs/parity.diff is missing; run bun tools/sync.mjs --report");
+	for (const { rel, outcome } of result.outcomes) log(`${outcome.padEnd(9)} ${rel}`);
+	for (const warning of result.warnings) error(`warning: ${warning}`);
+	if (check) {
+		if (!existsSync(parityPath)) result.errors.push("docs/parity.diff is missing; run bun tools/sync.mjs --report");
+		else if (readFileSync(parityPath, "utf8") !== parityReport(oldFiles, local(oldFiles))) {
+			result.errors.push("docs/parity.diff is stale; run bun tools/sync.mjs --report");
+		}
 	}
 	if (result.errors.length) {
-		for (const error of result.errors) console.error(`error: ${error}`);
+		for (const message of result.errors) error(`error: ${message}`);
 		return 1;
 	}
 	if (check || flags.has("--dry-run")) return 0;
 	for (const [rel, text] of result.writes) {
-		const path = join(repo, spec.localPath, rel);
+		const path = join(root, spec.localPath, rel);
 		if (text === null) unlinkSync(path);
 		else {
 			mkdirSync(dirname(path), { recursive: true });
 			writeFileSync(path, text);
 		}
 	}
-	const upstreamJson = join(repo, "tools/upstream.json");
+	const upstreamJson = join(root, "tools/upstream.json");
 	writeFileSync(upstreamJson, readFileSync(upstreamJson, "utf8").replace(spec.sha, sha));
-	writeFileSync(parityPath, parityReport(newFiles, readLocal(repo, spec.localPath, [...newFiles.keys()])));
-	console.log(`pin ${spec.sha.slice(0, 7)} -> ${sha.slice(0, 7)}; rewrote docs/parity.diff`);
+	mkdirSync(dirname(parityPath), { recursive: true });
+	writeFileSync(parityPath, parityReport(newFiles, local(newFiles)));
+	log(`pin ${spec.sha.slice(0, 7)} -> ${sha.slice(0, 7)}; rewrote docs/parity.diff`);
 	return 0;
 }
-
 if (import.meta.main) process.exit(main(process.argv.slice(2)));
