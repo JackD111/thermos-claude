@@ -40,7 +40,17 @@ claude plugin marketplace add "https://github.com/JackD111/thermos-claude.git#fe
 claude plugin install thermos@thermos-claude
 ```
 
-`claude plugin details thermos@thermos-claude` lists 3 skills and 2 agents. The `#feat/port` ref was used because the branch was not merged yet. The README omits the ref, so installs take `main`, which holds the same plugin once the branch merges.
+`claude plugin details thermos@thermos-claude` lists 3 skills and 2 agents.
+
+### Regression lane
+
+The same run against the earlier [kdoroszewicz port](https://github.com/kdoroszewicz/cursor-plugins-claude/tree/main/thermos) passes 4 of 6 checks. That port keeps upstream's `disable-model-invocation: true` on the rubric skills, so both subagents' Skill calls fail:
+
+```text
+Skill thermo-nuclear-review cannot be used with Skill tool due to disable-model-invocation
+```
+
+The two rubric-loading checks fail, and the reviewers fall back to their inline rubric. This run proves two things: the port must drop the flag on the rubric skills, and `check-claude-run.mjs` can tell a working port from a broken one. The `#feat/port` ref was used because the branch was not merged yet. The README omits the ref, so installs take `main`, which holds the same plugin once the branch merges.
 
 ## Codex
 

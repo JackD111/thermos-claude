@@ -144,6 +144,51 @@ describe("invariants", () => {
 			'"## 9.9.9 - <title>"',
 		],
 		[
+			"a skill description over 1024 characters",
+			(dir) => edit(dir, `${P}/skills/thermo-nuclear-review/SKILL.md`, (t) => t.replace(/^description: .*$/m, `description: ${"x".repeat(1025)}`)),
+			"description over 1024 characters",
+		],
+		[
+			"a skill without a description",
+			(dir) => edit(dir, `${P}/skills/thermo-nuclear-review/SKILL.md`, (t) => t.replace(/^description: .*\n/m, "")),
+			"thermo-nuclear-review/SKILL.md: no description",
+		],
+		[
+			"a skill without frontmatter",
+			(dir) => writeFileSync(join(dir, P, "skills/thermo-nuclear-review/SKILL.md"), "# No frontmatter\n"),
+			"thermo-nuclear-review/SKILL.md: no frontmatter",
+		],
+		[
+			"an agent without a description",
+			(dir) => edit(dir, `${P}/agents/thermo-nuclear-review-subagent.md`, (t) => t.replace(/^description: .*\n/m, "")),
+			"frontmatter needs a name and a description",
+		],
+		[
+			"an agent with invalid YAML frontmatter",
+			(dir) => edit(dir, `${P}/agents/thermo-nuclear-review-subagent.md`, (t) => t.replace(/^description: /m, "description: [unclosed ")),
+			"frontmatter is not valid YAML",
+		],
+		[
+			"a Codex manifest whose skills path is wrong",
+			(dir) => edit(dir, `${P}/.codex-plugin/plugin.json`, (t) => t.replace('"skills": "./skills/"', '"skills": "./skill/"')),
+			'"skills" must be "./skills/"',
+		],
+		[
+			"a Claude marketplace description that differs from the manifest",
+			(dir) => edit(dir, ".claude-plugin/marketplace.json", (t) => t.replace(/("source": "\.\/plugins\/thermos",\s*"description": ")[^"]*"/, '$1different"')),
+			"description differs from the plugin manifest",
+		],
+		[
+			"a Claude marketplace without an owner name",
+			(dir) => edit(dir, ".claude-plugin/marketplace.json", (t) => t.replace(/"owner": \{[^}]*\}/, '"owner": {}')),
+			"needs owner.name",
+		],
+		[
+			"a Codex marketplace without an install policy",
+			(dir) => edit(dir, ".agents/plugins/marketplace.json", (t) => t.replace(/"policy": \{[^}]*\}/, '"policy": {}')),
+			"needs policy.installation and policy.authentication",
+		],
+		[
 			"a pin bump the docs do not follow",
 			(dir) => edit(dir, "tools/upstream.json", (t) => t.replace(/"sha": "[0-9a-f]{40}"/, `"sha": "${"a".repeat(40)}"`)),
 			"NOTICE.md: does not quote the pinned upstream commit",

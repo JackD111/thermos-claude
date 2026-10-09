@@ -52,8 +52,8 @@ Codex lists plugin skills as `thermos:<skill>`, so the explicit marker is `$ther
 ### Maintain the port
 
 ```text
-bun tools/sync.mjs thermos <new-sha> --dry-run   # show what an upstream bump would change
-bun tools/sync.mjs thermos <new-sha>             # apply it and advance the pin
+bun tools/sync.mjs <new-sha> --dry-run           # show what an upstream bump would change
+bun tools/sync.mjs <new-sha>                     # apply it and advance the pin
 bun tools/generate.mjs                           # restamp versions, vendored agents, Codex preamble
 bun tools/generate.mjs --check                   # CI: fail on any stale generated file
 bun test                                         # invariants, parity, packaging
@@ -219,14 +219,14 @@ Proof levels: 1 = stated, 2 = cited `file:line` or docs, 3 = walked through, 4 =
 | Premise | Observation that could break it | Level now | Proved in |
 |---|---|---|---|
 | A bare `subagent_type` fails for plugin agents | Install the plugin and dispatch both names | 2 (pstack #58). The namespaced names work at level 5. | P3 |
-| A subagent cannot load a skill with `disable-model-invocation: true` | Run the review agent with the flag on, then with it off | 2 (docs) | P3 |
+| A subagent cannot load a skill with `disable-model-invocation: true` | Run the review agent with the flag on, then with it off | 5 (the regression lane against the kdoroszewicz port fails with "cannot be used with Skill tool due to disable-model-invocation") | done |
 | With the flag off, the agent body's "Load the skill" instruction is enough, and `skills:` preload is not needed | The subagent transcript shows a Skill call or quotes rubric-only text ("code judo") | 5 (both subagents called Skill successfully) | done |
 | Keeping the flag on `thermos` still lets the user invoke `/thermos:thermos` | Type it in a session | 2 | P3 |
 | Codex plugins cannot ship agents | Read the manifest schema at P4 time | 2 (issues #18988, #36855) | P4 |
 | A Codex child can read the vendored file by absolute path | `codex exec` run | 5 (both children read their file, then their rubric) | done |
 | `codex plugin add` is the install command | `codex plugin --help` on the installed CLI | 4 (codex-cli 0.162.0 lists `add` and `marketplace`) | done |
 | Upstream thermos files have not changed since 1.0.0 | `git log --follow -- thermos` on a full clone | 4 (3 commits, all on 2026-05-27) | done |
-| Installing thermos and pstack together causes no collision | Claude namespaces both. On Codex, install both and list the skills. | 2 / 1 | P4 |
+| Installing thermos and pstack together causes no collision | Both runtimes namespace plugin skills by plugin name | 4 (namespaced names seen in the live runs on both runtimes) | done |
 
 ## Phases
 
@@ -346,6 +346,10 @@ These are the accepted deviations from the sketch above, with what forced each o
 - **No `skills:` preload.** In the P3 live run, both subagents loaded `thermos:thermo-nuclear-review` and `thermos:thermo-nuclear-code-quality-review` through the Skill tool from the agent body's bare-name instruction. The prototype fork was not needed.
 - **Sequential fallback not exercised live.** In codex-cli 0.162.0, neither `--disable multi_agent` nor `-c agents.enabled=false` stopped `spawn_agent`. Both runs still spawned two reviewers. The fallback in `codex-tools.md` is written, but it is unverified.
 - **Live installs.** P3 ran first with `--plugin-dir`, and P4 ran first from a local marketplace. The milestone 2 review flagged that, so both runtimes were then installed from GitHub (`feat/port`) and passed again (docs/verification.md).
+- **One component, so no component argument.** `sync.mjs` takes `<sha>`, not `thermos <sha>`, because `upstream.json` pins a single component.
+- **No `CONTEXT.md`.** The ownership rules live once, in the owner table in `CONTRIBUTING.md`. A second copy would be a hand-synced list.
+- **No skills-only install check.** The README documents only plugin installs, and both runtimes passed a plugin install from GitHub. A skills-only install (`npx skills add`) is not a supported path, so it has no check.
+- **Collision with pstack.** Both runtimes put the plugin name in front of each skill name. Codex listed `thermos:thermo-nuclear-review` in the live rollout, and Claude Code dispatched `thermos:` skills and agents. pstack-claude's copy registers as `pstack:thermo-nuclear-code-quality-review`, so the names cannot collide. Both plugins were not installed together.
 - **Docs quote the pin.** `NOTICE.md` and `docs/reference.md` quote the pinned commit, and `generate.mjs --check` fails when either one disagrees with `tools/upstream.json`.
 ## Decisions
 
