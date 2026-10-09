@@ -345,6 +345,7 @@ These are the accepted deviations from the sketch above, with what forced each o
 - **Codex invocation is `$thermos:thermos`.** Codex namespaces plugin skills. With `allow_implicit_invocation: false`, it also hides `thermos:thermos` from the model's skill list, so a bare `$thermos` ran the `thermo-nuclear-review` rubric alone. Source: the P4 live run and its rollout.
 - **No `skills:` preload.** In the P3 live run, both subagents loaded `thermos:thermo-nuclear-review` and `thermos:thermo-nuclear-code-quality-review` through the Skill tool from the agent body's bare-name instruction. The prototype fork was not needed.
 - **Sequential fallback not exercised live.** In codex-cli 0.162.0, neither `--disable multi_agent` nor `-c agents.enabled=false` stopped `spawn_agent`. Both runs still spawned two reviewers. The fallback in `codex-tools.md` is written, but it is unverified.
+- **Live installs.** P3 ran first with `--plugin-dir`, and P4 ran first from a local marketplace. The milestone 2 review flagged that, so both runtimes were then installed from GitHub (`feat/port`) and passed again (docs/verification.md).
 - **Docs quote the pin.** `NOTICE.md` and `docs/reference.md` quote the pinned commit, and `generate.mjs --check` fails when either one disagrees with `tools/upstream.json`.
 ## Decisions
 

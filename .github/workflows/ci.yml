@@ -37,6 +37,7 @@ jobs:
         with:
           persist-credentials: false
       - name: actionlint
-        uses: docker://rhysd/actionlint:1.7.12
+        # Tags are mutable, so pin the digest. Resolved with: docker buildx imagetools inspect rhysd/actionlint:1.7.12
+        uses: docker://rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
         with:
           args: -color

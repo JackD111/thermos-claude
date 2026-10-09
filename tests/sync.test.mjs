@@ -241,6 +241,28 @@ describe("isolatedGitEnv", () => {
 		expect(env.PATH).toBe("p");
 		expect(env.GIT_CONFIG_GLOBAL).toBe("/empty");
 		expect(Object.keys(env).filter((k) => k.startsWith("GIT_CONFIG")).sort()).toEqual(["GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM"]);
+		expect(env.GIT_ATTR_NOSYSTEM).toBe("1");
+	});
+
+	test("the parity report ignores a global attributes file", () => {
+		const files = (text) => new Map([["agents/a.md", text]]);
+		const before = "# Head\n\none\ntwo\nthree\nfour\nfive\nsix\nseven\n";
+		const after = before.replace("six", "SIX");
+		const baseline = parityReport(files(before), files(after));
+		const xdg = mkdtempSync(join(tmpdir(), "thermos-xdg-"));
+		mkdirSync(join(xdg, "git"));
+		const saved = process.env.XDG_CONFIG_HOME;
+		process.env.XDG_CONFIG_HOME = xdg;
+		try {
+			for (const attributes of ["*.md diff=markdown\n", "* -diff\n"]) {
+				writeFileSync(join(xdg, "git/attributes"), attributes);
+				expect(parityReport(files(before), files(after))).toBe(baseline);
+			}
+		} finally {
+			if (saved === undefined) delete process.env.XDG_CONFIG_HOME;
+			else process.env.XDG_CONFIG_HOME = saved;
+			rmSync(xdg, { recursive: true, force: true });
+		}
 	});
 
 	test("the parity report ignores diff settings in the environment", () => {

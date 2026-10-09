@@ -139,14 +139,14 @@ export function unifiedDiff(a, b) {
 }
 
 // The output must be the same bytes on every machine, so no user or system
-// git config reaches it (diff.noprefix, diff.context, diff.algorithm, and
-// the like), and every format choice is spelled out.
+// git config or attributes reach it (diff.noprefix, diff.context, a global
+// `*.md diff=markdown`, and the like), and every format choice is spelled out.
 const GIT_CONFIG_ENV = /^GIT_CONFIG(?:_|$)|^GIT_CONFIG_PARAMETERS$/;
 
 // `emptyConfig` is an empty file: Git for Windows rejects the null device here.
 export function isolatedGitEnv(emptyConfig, env = process.env) {
 	const clean = Object.fromEntries(Object.entries(env).filter(([key]) => !GIT_CONFIG_ENV.test(key)));
-	return { ...clean, GIT_CONFIG_GLOBAL: emptyConfig, GIT_CONFIG_NOSYSTEM: "1" };
+	return { ...clean, GIT_CONFIG_GLOBAL: emptyConfig, GIT_CONFIG_NOSYSTEM: "1", GIT_ATTR_NOSYSTEM: "1" };
 }
 
 function diffNoIndex(cwd, a, b) {
@@ -157,6 +157,7 @@ function diffNoIndex(cwd, a, b) {
 		[
 			"-c", "core.autocrlf=false",
 			"-c", "core.quotepath=false",
+			"-c", `core.attributesFile=${emptyConfig}`,
 			"diff", "--no-index", "--no-color", "--no-ext-diff", "--no-renames",
 			"--src-prefix=a/", "--dst-prefix=b/", "--diff-algorithm=myers", "--unified=3", "--inter-hunk-context=0",
 			"--", a, b,
