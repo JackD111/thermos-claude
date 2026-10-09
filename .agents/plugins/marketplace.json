@@ -1,0 +1,12 @@
+{
+	"name": "thermos-claude",
+	"interface": { "displayName": "thermos-claude" },
+	"plugins": [
+		{
+			"name": "thermos",
+			"source": { "source": "local", "path": "./plugins/thermos" },
+			"policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL", "products": ["CODEX"] },
+			"category": "Developer Tools"
+		}
+	]
+}

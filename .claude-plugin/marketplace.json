@@ -1,0 +1,13 @@
+{
+	"name": "thermos-claude",
+	"owner": { "name": "JackD111", "url": "https://github.com/JackD111" },
+	"description": "Claude Code and Codex port of Cursor's thermos plugin.",
+	"plugins": [
+		{
+			"name": "thermos",
+			"source": "./plugins/thermos",
+			"description": "Thermo-nuclear branch review: a deep correctness and security audit plus a harsh code-quality rubric, run as two parallel subagents and merged into one verdict. Port of Cursor's thermos plugin.",
+			"version": "0.1.0"
+		}
+	]
+}

@@ -1,0 +1,44 @@
+{
+	"substitutions": [
+		{
+			"pattern": "You are a **Task subagent**.",
+			"replacement": "You are an **`Agent` subagent**.",
+			"files": "^agents/",
+			"rationale": "Claude Code's subagent tool is Agent (Task survives only as a legacy alias). Same rewrite pstack-claude applies to \"Task subagent\"."
+		},
+		{
+			"pattern": "Invoked via Task after a parent",
+			"replacement": "Invoked via the Agent tool after a parent",
+			"files": "^agents/",
+			"rationale": "Agent description frontmatter names Cursor's Task tool; Claude Code dispatches subagents with the Agent tool."
+		},
+		{
+			"pattern": "run two `Task` calls in parallel — `subagent_type: \"shell\"` and `subagent_type: \"explore\"` —",
+			"replacement": "run a `Bash` call and an `Agent` call with `subagent_type: \"Explore\"` in parallel",
+			"files": "^agents/",
+			"rationale": "Cursor's built-in shell and explore subagent types do not exist in Claude Code. Bash runs git diff directly and the built-in Explore agent reads the changed files."
+		},
+		{
+			"pattern": "subagent_type: \"thermo-nuclear-review-subagent\"",
+			"replacement": "subagent_type: \"thermos:thermo-nuclear-review-subagent\"",
+			"rationale": "Claude Code registers plugin agents as <plugin>:<file name>; a bare name fails with \"Agent type not found\" (pstack-claude #58)."
+		},
+		{
+			"pattern": "subagent_type: \"thermo-nuclear-code-quality-review-subagent\"",
+			"replacement": "subagent_type: \"thermos:thermo-nuclear-code-quality-review-subagent\"",
+			"rationale": "Claude Code registers plugin agents as <plugin>:<file name>; a bare name fails with \"Agent type not found\" (pstack-claude #58)."
+		}
+	],
+	"denylist": [
+		{ "token": "`Task`", "hint": "Cursor's Task tool is Claude Code's Agent tool; add a substitution rule." },
+		{ "token": "Task subagent", "hint": "Cursor's Task tool is Claude Code's Agent tool; add a substitution rule." },
+		{ "token": "via Task", "hint": "Cursor's Task tool is Claude Code's Agent tool; add a substitution rule." },
+		{ "token": "generalPurpose", "hint": "Claude Code's built-in type is general-purpose." },
+		{ "token": "subagent_type: \"shell\"", "hint": "Cursor-only subagent type; Claude Code runs git through the Bash tool." },
+		{ "token": "subagent_type: \"explore\"", "hint": "Cursor-only subagent type; Claude Code's built-in is Explore." },
+		{ "regex": "subagent_type: \"thermo-", "hint": "Plugin agents dispatch as thermos:<name>; a bare name fails at runtime." },
+		{ "token": ".cursor/", "hint": "Cursor config path; rewrite for Claude Code (.claude/) or drop the sentence." },
+		{ "token": "/add-plugin", "hint": "Cursor install command; Claude Code uses /plugin install." },
+		{ "regex": "^is_background:", "hint": "Cursor-only agent frontmatter; Claude Code sets run_in_background on each Agent call." }
+	]
+}

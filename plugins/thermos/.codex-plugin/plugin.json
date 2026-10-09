@@ -1,0 +1,21 @@
+{
+	"name": "thermos",
+	"version": "0.1.0",
+	"description": "Thermo-nuclear branch review: a deep correctness and security audit plus a harsh code-quality rubric, run as two parallel subagents and merged into one verdict. Port of Cursor's thermos plugin.",
+	"author": { "name": "JackD111", "url": "https://github.com/JackD111" },
+	"homepage": "https://github.com/JackD111/thermos-claude",
+	"repository": "https://github.com/JackD111/thermos-claude",
+	"license": "MIT",
+	"keywords": ["thermos", "thermo-nuclear", "code-review", "deep-review", "code-quality", "security-review", "subagents", "claude-code", "codex"],
+	"skills": "./skills/",
+	"interface": {
+		"displayName": "Thermos",
+		"shortDescription": "Thermo-nuclear branch review with two parallel reviewer subagents",
+		"longDescription": "Thermos reviews a branch twice in parallel: a deep audit for bugs, breaking changes, security issues, devex regressions, and feature-flag leaks, and a harsh maintainability audit for structure, file growth, and spaghetti. It then merges both into one deduplicated verdict. Run it with $thermos:thermos, or run either rubric alone.",
+		"developerName": "JackD111 (port of Cursor's thermos)",
+		"category": "Developer Tools",
+		"capabilities": ["Interactive", "Read"],
+		"defaultPrompt": ["$thermos:thermos review this branch against main"],
+		"websiteURL": "https://github.com/JackD111/thermos-claude"
+	}
+}

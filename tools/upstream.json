@@ -1,0 +1,8 @@
+{
+	"remote": "https://github.com/cursor/plugins",
+	"upstreamPath": "thermos",
+	"localPath": "plugins/thermos",
+	"sha": "dc415439eebed0cd8fddb11e896dee43bce9d8b0",
+	"upstreamVersion": "1.0.0",
+	"exclude": [".cursor-plugin/", "CHANGELOG.md", "LICENSE", "README.md", "assets/"]
+}
