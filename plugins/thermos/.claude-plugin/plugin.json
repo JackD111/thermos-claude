@@ -1,0 +1,10 @@
+{
+	"name": "thermos",
+	"version": "0.1.0",
+	"description": "Thermo-nuclear branch review: a deep correctness and security audit plus a harsh code-quality rubric, run as two parallel subagents and merged into one verdict. Port of Cursor's thermos plugin.",
+	"author": { "name": "JackD111", "url": "https://github.com/JackD111" },
+	"homepage": "https://github.com/JackD111/thermos-claude",
+	"repository": "https://github.com/JackD111/thermos-claude",
+	"license": "MIT",
+	"keywords": ["thermos", "thermo-nuclear", "code-review", "deep-review", "code-quality", "security-review", "subagents", "claude-code", "codex"]
+}
