@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test, setDefaultTimeout } from "bun:test";
 import { execFileSync, spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -7,6 +7,9 @@ import { pathToFileURL } from "node:url";
 
 import { derive, loadRules, repo } from "../tools/derive.mjs";
 import { isExcluded, isolatedGitEnv, main, parityReport, plan } from "../tools/sync.mjs";
+
+// Tests here spawn git, which can stall for seconds on Windows runners.
+setDefaultTimeout(30_000);
 
 const rules = loadRules();
 const fork = { kind: "policy", why: "Because.", since: "0.1.0", upstream: "not-proposed" };
@@ -151,7 +154,7 @@ describe("the committed tree", () => {
 describe("main", () => {
 	let dirs = [];
 	afterEach(() => {
-		for (const dir of dirs) rmSync(dir, { recursive: true, force: true });
+		for (const dir of dirs) rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 		dirs = [];
 	});
 	const scratch = () => {

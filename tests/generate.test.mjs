@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test, setDefaultTimeout } from "bun:test";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -6,11 +6,14 @@ import { join } from "node:path";
 import { repo } from "../tools/derive.mjs";
 import { plan, problems, stale, stampVersion } from "../tools/generate.mjs";
 
+// Tests here spawn git, which can stall for seconds on Windows runners.
+setDefaultTimeout(30_000);
+
 // Each guard gets a fixture that must trip it: a check that quietly matches
 // nothing looks the same as a pass.
 let dirs = [];
 afterEach(() => {
-	for (const dir of dirs) rmSync(dir, { recursive: true, force: true });
+	for (const dir of dirs) rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 	dirs = [];
 });
 
