@@ -189,6 +189,30 @@ describe("invariants", () => {
 			"needs policy.installation and policy.authentication",
 		],
 		[
+			"a Codex marketplace entry named differently from the manifest",
+			(dir) => edit(dir, ".agents/plugins/marketplace.json", (t) => t.replace('"name": "thermos",', '"name": "thermo",')),
+			'.agents/plugins/marketplace.json: needs exactly one entry named "thermos"',
+		],
+		[
+			"a second Claude marketplace entry",
+			(dir) =>
+				edit(dir, ".claude-plugin/marketplace.json", (t) => {
+					const market = JSON.parse(t);
+					market.plugins.push({ ...market.plugins[0], name: "other" });
+					return JSON.stringify(market, null, "\t");
+				}),
+			'.claude-plugin/marketplace.json: needs exactly one entry named "thermos"',
+		],
+		[
+			"a field missing from both manifests",
+			(dir) => {
+				for (const manifest of [`${P}/.claude-plugin/plugin.json`, `${P}/.codex-plugin/plugin.json`]) {
+					edit(dir, manifest, (t) => t.replace(/\t"license": "MIT",\n/, ""));
+				}
+			},
+			'.claude-plugin/plugin.json: missing "license"',
+		],
+		[
 			"a pin bump the docs do not follow",
 			(dir) => edit(dir, "tools/upstream.json", (t) => t.replace(/"sha": "[0-9a-f]{40}"/, `"sha": "${"a".repeat(40)}"`)),
 			"NOTICE.md: does not quote the pinned upstream commit",

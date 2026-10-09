@@ -105,7 +105,7 @@ export function validateSkills(root) {
 			if (allow !== false) faults.push(`${posix(relative(root, policy))}: needs policy.allow_implicit_invocation: false, Codex's match for disable-model-invocation`);
 		}
 		if (PREAMBLE_SKILLS.has(entry) && !readFileSync(path, "utf8").split("\n").includes(CODEX_PREAMBLE)) {
-			faults.push(`${rel}: missing the Codex preamble line`);
+			faults.push(`${rel}: missing the Codex preamble line; run bun tools/sync.mjs --rederive`);
 		}
 	}
 	return faults;

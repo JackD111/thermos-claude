@@ -84,6 +84,7 @@ describe("denylist", () => {
 	test.each([
 		"run two `Task` calls",
 		"You are a **Task subagent**.",
+		"Invoked via Task after the parent changes its wording",
 		'subagent_type: "generalPurpose"',
 		'subagent_type: "shell"',
 		'subagent_type: "explore"',
@@ -127,7 +128,7 @@ describe("portFrontmatter", () => {
 	});
 
 	test("Cursor-only keys go with their continuation lines", () => {
-		const text = "---\nname: a\nreminder: |\n  line one\n  line two\nis_background: true\ndescription: d\n---\nbody";
+		const text = "---\nname: a\nmode: agent\nicon: flame\ncolor: red\nreminder: |\n  line one\n  line two\nis_background: true\ndescription: d\n---\nbody";
 		expect(portFrontmatter("agents/a.md", text)).toBe("---\nname: a\ndescription: d\n---\nbody");
 	});
 

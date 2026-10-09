@@ -93,6 +93,18 @@ describe("plan", () => {
 		expect(r.errors).toEqual([]);
 	});
 
+	test("--rederive keeps a declared fork", () => {
+		const r = run({
+			oldFiles: files({ [A]: v1 }),
+			newFiles: files({ [A]: v1 }),
+			localFiles: files({ [A]: "forked\n" }),
+			forks: new Map([[A, fork]]),
+			rederive: true,
+		});
+		expect(r.outcomes).toEqual([{ rel: A, outcome: "forked" }]);
+		expect(r.writes.size).toBe(0);
+	});
+
 	test("deletes a clean file that upstream deleted, refuses an edited one", () => {
 		const clean = run({ oldFiles: files({ [A]: v1 }), localFiles: files({ [A]: derive(A, v1, rules) }) });
 		expect(clean.outcomes).toEqual([{ rel: A, outcome: "deleted" }]);

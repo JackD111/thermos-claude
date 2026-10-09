@@ -54,7 +54,7 @@ Codex lists plugin skills as `thermos:<skill>`, so the explicit marker is `$ther
 ```text
 bun tools/sync.mjs <new-sha> --dry-run           # show what an upstream bump would change
 bun tools/sync.mjs <new-sha>                     # apply it and advance the pin
-bun tools/generate.mjs                           # restamp versions, vendored agents, Codex preamble
+bun tools/generate.mjs                           # restamp versions and vendored agents
 bun tools/generate.mjs --check                   # CI: fail on any stale generated file
 bun test                                         # invariants, parity, packaging
 ```
@@ -99,8 +99,8 @@ The port has three kinds of file. Every path has exactly one owner.
 
 | Owner | Files | Who writes them | What checks them |
 |---|---|---|---|
-| Upstream | the 5 content files | `sync.mjs` only, from `derive(upstream@pin)` | the `sync --dry-run` CI job. A hand edit fails unless `forks.json` declares it. |
-| Generator | manifest `version` fields, `references/agents/*.md`, the Codex preamble line | `generate.mjs` only | `generate.mjs --check` in CI |
+| Upstream | the 5 content files, including the Codex preamble line that `derive()` stamps | `sync.mjs` only, from `derive(upstream@pin)` (`--rederive` after a rule change) | the `sync --dry-run` CI job. A hand edit fails unless `forks.json` declares it. |
+| Generator | manifest `version` fields, `references/agents/*.md` | `generate.mjs` only | `generate.mjs --check` in CI |
 | Port | everything else (manifests, marketplaces, `codex-tools.md`, `openai.yaml`, tools, tests, docs) | people | tests |
 
 `derive(file)` is a pure function: apply the substitutions in order, then the frontmatter rules, then the generator stamps. Every check calls the same function. Tests do not keep their own copy.
